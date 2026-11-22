@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f766e">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Absen Kantor Maju</title>
+<style>
+:root{--bg:#f2f6f5;--card:#fff;--ink:#13211e;--muted:#5a6b66;--brand:#0f766e;--on-brand:#fff;--line:#dbe4e1;--ok:#15803d;--warn:#b45309;--bad:#b91c1c;--chip:#e6f1ef}
+@media(prefers-color-scheme:dark){:root{--bg:#0d1413;--card:#151f1d;--ink:#e7f0ed;--muted:#9db0aa;--brand:#2dd4bf;--on-brand:#06201c;--line:#26332f;--ok:#4ade80;--warn:#fbbf24;--bad:#f87171;--chip:#1c2b28}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
+.app{max-width:560px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+header{background:var(--brand);color:var(--on-brand);padding:14px 18px 16px}
+header h1{margin:0;font-size:18px;font-weight:700}
+header p{margin:2px 0 0;font-size:13px;opacity:.85}
+main{flex:1;padding:14px 14px 90px}
+.view{display:none}.view.active{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:12px}
+.clock{font-size:46px;font-weight:700;letter-spacing:1px;text-align:center;font-variant-numeric:tabular-nums}
+.date{text-align:center;color:var(--muted);margin-top:-4px}
+.status{text-align:center;margin:12px 0 4px;font-size:15px}
+.row{display:flex;gap:10px}
+.btn{flex:1;border:0;border-radius:14px;padding:16px 12px;font:inherit;font-weight:700;font-size:16px;background:var(--brand);color:var(--on-brand);cursor:pointer}
+.btn.alt{background:var(--chip);color:var(--ink)}
+.btn.bad{background:var(--bad);color:#fff}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+label{display:block;font-size:13px;color:var(--muted);margin:12px 0 4px}
+input[type=text],input[type=time],input[type=number],input[type=month]{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
+.check{display:flex;align-items:center;gap:10px;margin:12px 0}.check input{width:20px;height:20px}.check span{color:var(--ink);font-size:15px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.chip{background:var(--chip);border-radius:12px;padding:8px 12px;font-size:13px}.chip b{display:block;font-size:20px}
+.rec{display:flex;flex-direction:column;gap:6px}
+.rec h3{margin:0;font-size:15px}
+.times{display:flex;gap:16px;font-size:14px;flex-wrap:wrap}
+.badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:12px;font-weight:600;background:var(--chip)}
+.badge.ok{color:var(--ok)}.badge.warn{color:var(--warn)}.badge.bad{color:var(--bad)}
+.thumbs{display:flex;gap:8px}.thumbs img{width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid var(--line);cursor:pointer}
+a{color:var(--brand)}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom)}
+nav div{display:flex;width:100%;max-width:560px}
+nav button{flex:1;border:0;background:none;color:var(--muted);padding:12px 4px;font:inherit;font-size:13px;cursor:pointer}
+nav button.active{color:var(--brand);font-weight:700}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center;z-index:10}
+.modal[hidden]{display:none}
+.sheet{background:var(--card);width:100%;max-width:560px;border-radius:20px 20px 0 0;padding:16px;max-height:92vh;overflow:auto}
+.sheet h2{margin:0 0 10px;font-size:18px}
+video{width:100%;border-radius:14px;background:#000;transform:scaleX(-1);aspect-ratio:4/3;object-fit:cover}
+.hint{font-size:13px;color:var(--muted);margin:8px 0}
+.toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;z-index:20;max-width:90%;text-align:center}
+.empty{text-align:center;color:var(--muted);padding:30px 10px}
+</style>
+</head>
+<body>
+<div class="app">
+  <header><h1>Absen Kantor Maju</h1><p id="who">Atur nama Anda di tab Pengaturan</p></header>
+  <main>
+    <section id="v-absen" class="view active">
+      <div class="card">
+        <div class="clock" id="clock">--:--:--</div>
+        <div class="date" id="today"></div>
+        <div class="status" id="status"></div>
+        <div class="row" style="margin-top:14px">
+          <button class="btn" id="btnIn">Absen Masuk</button>
+          <button class="btn alt" id="btnOut">Absen Pulang</button>
+        </div>
+      </div>
+      <div class="card hint" id="areaHint"></div>
+    </section>
+
+    <section id="v-riwayat" class="view">
+      <div class="card">
+        <label for="month" style="margin-top:0">Bulan</label>
+        <input type="month" id="month">
+        <div class="chips" id="stats"></div>
+        <button class="btn" id="btnCsv" style="width:100%">Ekspor CSV</button>
+      </div>
+      <div id="list"></div>
+    </section>
+
+    <section id="v-setelan" class="view">
+      <div class="card">
+        <label for="sName" style="margin-top:0">Nama karyawan</label><input type="text" id="sName" autocomplete="off">
+        <label for="sId">ID / NIK (opsional)</label><input type="text" id="sId" autocomplete="off">
+        <label for="sOrg">Instansi / perusahaan (opsional)</label><input type="text" id="sOrg" autocomplete="off">
+        <div class="row">
+          <div style="flex:1"><label for="sStart">Jam masuk</label><input type="time" id="sStart"></div>
+          <div style="flex:1"><label for="sGrace">Toleransi (menit)</label><input type="number" id="sGrace" min="0" max="120"></div>
+        </div>
+      </div>
+      <div class="card">
+        <b>Lokasi kantor (opsional)</b>
+        <p class="hint">Jika diisi, absen di luar radius akan ditandai "di luar area".</p>
+        <div class="row">
+          <div style="flex:1"><label for="sLat">Latitude</label><input type="text" id="sLat" inputmode="decimal"></div>
+          <div style="flex:1"><label for="sLng">Longitude</label><input type="text" id="sLng" inputmode="decimal"></div>
+        </div>
+        <label for="sRad">Radius (meter)</label><input type="number" id="sRad" min="10" max="5000">
+        <button class="btn alt" id="btnHere" style="width:100%;margin-top:12px">Pakai lokasi saya sekarang</button>
+        <label class="check"><input type="checkbox" id="sSelfie"><span>Wajib foto selfie</span></label>
+        <label class="check"><input type="checkbox" id="sLoc"><span>Wajib lokasi GPS</span></label>
+      </div>
+      <button class="btn" id="btnSaveSet" style="width:100%;margin-bottom:12px">Simpan pengaturan</button>
+      <button class="btn bad" id="btnWipe" style="width:100%">Hapus semua data absensi</button>
+      <p class="hint">Data (termasuk foto & lokasi) hanya tersimpan di perangkat ini, tidak dikirim ke server mana pun.</p>
+    </section>
+  </main>
+  <nav><div>
+    <button data-v="absen" class="active">Absen</button>
+    <button data-v="riwayat">Riwayat</button>
+    <button data-v="setelan">Pengaturan</button>
+  </div></nav>
+</div>
+
+<div class="modal" id="capModal" hidden>
+  <div class="sheet">
+    <h2 id="capTitle">Absen</h2>
+    <video id="video" playsinline muted></video>
+    <div class="hint" id="camHint">Menyalakan kamera…</div>
+    <div class="hint" id="gpsHint">Mencari lokasi…</div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn alt" id="capCancel">Batal</button>
+      <button class="btn" id="capSave" disabled>Ambil foto & simpan</button>
+    </div>
+  </div>
+</div>
+<div class="modal" id="viewModal" hidden><div class="sheet"><img id="bigImg" alt="Foto absen" style="width:100%;border-radius:12px"><button class="btn alt" id="viewClose" style="width:100%;margin-top:10px">Tutup</button></div></div>
+<div class="modal" id="askModal" hidden><div class="sheet"><h2 id="askMsg"></h2><div class="row"><button class="btn alt" id="askNo">Batal</button><button class="btn bad" id="askYes">Ya, lanjut</button></div></div></div>
+
+<script>
+"use strict";
+const $=s=>document.querySelector(s), pad=n=>String(n).padStart(2,'0');
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const KS='absensi.v1.settings', KR='absensi.v1.records';
+const DEF={name:'',empId:'',org:'',workStart:'08:00',grace:10,officeLat:'',officeLng:'',radius:100,needSelfie:true,needLoc:true};
+const load=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}};
+const store=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}};
+let settings=Object.assign({},DEF,load(KS,{})), records=load(KR,[]);
+
+const ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const hm=ts=>{const d=new Date(ts);return pad(d.getHours())+':'+pad(d.getMinutes())};
+const todayRec=()=>records.find(r=>r.date===ymd(new Date()));
+const hasOffice=()=>settings.officeLat!==''&&settings.officeLng!==''&&!isNaN(parseFloat(settings.officeLat))&&!isNaN(parseFloat(settings.officeLng));
+
+function toast(msg){document.querySelectorAll('.toast').forEach(x=>x.remove());const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3200)}
+function askConfirm(msg){return new Promise(res=>{$('#askMsg').textContent=msg;$('#askModal').hidden=false;const done=v=>{$('#askModal').hidden=true;res(v)};$('#askYes').onclick=()=>done(true);$('#askNo').onclick=()=>done(false)})}
+
+function dist(lat1,lng1,lat2,lng2){const R=6371000,t=x=>x*Math.PI/180,dLa=t(lat2-lat1),dLo=t(lng2-lng1);
+  const a=Math.sin(dLa/2)**2+Math.cos(t(lat1))*Math.cos(t(lat2))*Math.sin(dLo/2)**2;return 2*R*Math.asin(Math.sqrt(a))}
+function isLate(ts){const [h,m]=settings.workStart.split(':').map(Number);const d=new Date(ts);
+  return d.getHours()*60+d.getMinutes()>h*60+m+Number(settings.grace||0)}
+function durMin(r){return r.in&&r.out?Math.max(0,Math.round((r.out.ts-r.in.ts)/60000)):0}
+const fmtDur=m=>Math.floor(m/60)+'j '+pad(m%60)+'m';
+
+/* ---------- tampilan ---------- */
+function showView(v){document.querySelectorAll('.view').forEach(e=>e.classList.toggle('active',e.id==='v-'+v));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.v===v));
+  if(v==='riwayat')renderHistory(); if(v==='setelan')fillSettings()}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>showView(b.dataset.v));
+
+function tick(){const n=new Date();$('#clock').textContent=pad(n.getHours())+':'+pad(n.getMinutes())+':'+pad(n.getSeconds());
+  $('#today').textContent=n.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  if(tick.d!==ymd(n)){tick.d=ymd(n);renderToday()}}
+function renderToday(){
+  $('#who').textContent=settings.name?settings.name+(settings.empId?' · '+settings.empId:''):'Atur nama Anda di tab Pengaturan';
+  const r=todayRec();let s='Belum absen masuk hari ini';
+  if(r&&r.in){s='Masuk '+hm(r.in.ts)+(isLate(r.in.ts)?' (terlambat)':' (tepat waktu)')+' · Pulang '+(r.out?hm(r.out.ts):'—')}
+  $('#status').textContent=s;
+  $('#btnIn').disabled=!!(r&&r.in); $('#btnOut').disabled=!(r&&r.in&&!r.out);
+  $('#areaHint').textContent=hasOffice()?'Area kantor aktif: radius '+settings.radius+' m.':'Area kantor belum diatur (opsional, lihat tab Pengaturan).';
+}
+
+/* ---------- ambil foto + lokasi ---------- */
+let stream=null,camOk=false,geo=null,watchId=null,pending=null;
+function updateSave(){const okCam=camOk||!settings.needSelfie, okLoc=!!geo||!settings.needLoc;$('#capSave').disabled=!(okCam&&okLoc)}
+async function openCapture(type){
+  if(!settings.name){toast('Isi nama Anda di Pengaturan dulu');showView('setelan');return}
+  pending=type;camOk=false;geo=null;
+  $('#capTitle').textContent=type==='in'?'Absen Masuk':'Absen Pulang';
+  $('#camHint').textContent='Menyalakan kamera…';$('#gpsHint').textContent='Mencari lokasi…';
+  $('#capModal').hidden=false;updateSave();
+  if(navigator.geolocation){watchId=navigator.geolocation.watchPosition(p=>{geo={lat:p.coords.latitude,lng:p.coords.longitude,acc:Math.round(p.coords.accuracy)};
+      let t='Lokasi didapat (akurasi ±'+geo.acc+' m)';
+      if(hasOffice()){const d=Math.round(dist(geo.lat,geo.lng,parseFloat(settings.officeLat),parseFloat(settings.officeLng)));t+=' · '+d+' m dari kantor'}
+      $('#gpsHint').textContent=t;updateSave()},
+    e=>{$('#gpsHint').textContent='Lokasi gagal: '+(e.code===1?'izin lokasi ditolak. Aktifkan di pengaturan perangkat.':'sinyal GPS belum tersedia.');updateSave()},
+    {enableHighAccuracy:true,timeout:25000,maximumAge:0})}
+  else{$('#gpsHint').textContent='Perangkat tidak mendukung GPS.'}
+  try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:640},height:{ideal:480}},audio:false});
+    $('#video').srcObject=stream;await $('#video').play();camOk=true;$('#camHint').textContent='Posisikan wajah di kamera.'}
+  catch(e){$('#camHint').textContent='Kamera tidak tersedia: izinkan akses kamera untuk aplikasi ini.'}
+  updateSave();
+}
+function closeCapture(){$('#capModal').hidden=true;if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}
+  if(watchId!==null){navigator.geolocation.clearWatch(watchId);watchId=null}}
+function snap(stamp){if(!camOk)return null;const v=$('#video'),w=320,h=Math.round(w*(v.videoHeight||480)/(v.videoWidth||640));
+  const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.drawImage(v,0,0,w,h);
+  x.fillStyle='rgba(0,0,0,.55)';x.fillRect(0,h-22,w,22);x.fillStyle='#fff';x.font='13px sans-serif';x.fillText(stamp,6,h-7);
+  return c.toDataURL('image/jpeg',0.6)}
+function saveCapture(){
+  const now=Date.now(),d=new Date(now),stamp=ymd(d)+' '+pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
+  const e={ts:now,lat:geo?geo.lat:null,lng:geo?geo.lng:null,acc:geo?geo.acc:null,photo:snap(stamp),inArea:null,dist:null};
+  if(geo&&hasOffice()){e.dist=Math.round(dist(geo.lat,geo.lng,parseFloat(settings.officeLat),parseFloat(settings.officeLng)));e.inArea=e.dist<=Number(settings.radius)}
+  let r=todayRec();if(!r){r={date:ymd(d)};records.push(r)}
+  r[pending]=e;
+  if(!store(KR,records)){e.photo=null;if(!store(KR,records)){toast('Penyimpanan penuh, data gagal disimpan');return}toast('Penyimpanan hampir penuh: foto tidak disimpan')}
+  const outside=e.inArea===false;closeCapture();renderToday();
+  toast(outside?'Tersimpan, tetapi Anda di luar area kantor':(pending==='in'?'Absen masuk tersimpan':'Absen pulang tersimpan'));
+}
+$('#btnIn').onclick=()=>openCapture('in');$('#btnOut').onclick=()=>openCapture('out');
+$('#capCancel').onclick=closeCapture;$('#capSave').onclick=saveCapture;
+
+/* ---------- riwayat & CSV ---------- */
+function monthRecs(){const m=$('#month').value;return records.filter(r=>r.date.startsWith(m)).sort((a,b)=>b.date.localeCompare(a.date))}
+function areaBadge(e){return e.inArea===true?'<span class="badge ok">di area</span>':e.inArea===false?'<span class="badge bad">di luar area</span>':''}
+function mapLink(e){return e&&e.lat!=null?' <a target="_blank" rel="noopener" href="https://www.google.com/maps?q='+e.lat+','+e.lng+'">peta</a>':''}
+function renderHistory(){
+  if(!$('#month').value)$('#month').value=ymd(new Date()).slice(0,7);
+  const rs=monthRecs();const days=rs.filter(r=>r.in).length,late=rs.filter(r=>r.in&&isLate(r.in.ts)).length,mins=rs.reduce((a,r)=>a+durMin(r),0);
+  $('#stats').innerHTML='<div class="chip"><b>'+days+'</b>hari hadir</div><div class="chip"><b>'+late+'</b>terlambat</div><div class="chip"><b>'+fmtDur(mins)+'</b>total jam</div>';
+  $('#list').innerHTML=rs.length?rs.map(r=>{
+    const d=new Date(r.date+'T00:00:00').toLocaleDateString('id-ID',{weekday:'short',day:'numeric',month:'short'});
+    const st=r.in?(isLate(r.in.ts)?'<span class="badge warn">terlambat</span>':'<span class="badge ok">tepat waktu</span>'):'';
+    return '<div class="card rec"><h3>'+esc(d)+' '+st+'</h3><div class="times"><span>Masuk: <b>'+(r.in?hm(r.in.ts):'—')+'</b> '+(r.in?areaBadge(r.in)+mapLink(r.in):'')+'</span><span>Pulang: <b>'+(r.out?hm(r.out.ts):'—')+'</b> '+(r.out?areaBadge(r.out)+mapLink(r.out):'')+'</span><span>Durasi: '+(r.out?fmtDur(durMin(r)):'—')+'</span></div>'
+      +'<div class="thumbs">'+['in','out'].map(k=>r[k]&&r[k].photo?'<img alt="Foto '+k+'" data-src="'+r[k].photo+'">':'').join('')+'</div></div>'}).join(''):'<div class="empty">Belum ada data absensi bulan ini.</div>';
+  document.querySelectorAll('.thumbs img').forEach(i=>{i.src=i.dataset.src;i.onclick=()=>{$('#bigImg').src=i.dataset.src;$('#viewModal').hidden=false}});
+}
+$('#month').onchange=renderHistory;$('#viewClose').onclick=()=>$('#viewModal').hidden=true;
+const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+function exportCsv(){
+  const rs=monthRecs().slice().reverse();
+  const head=['Tanggal','Nama','ID','Jam Masuk','Jam Pulang','Durasi (menit)','Status Masuk','Lokasi Masuk','Area Masuk','Lokasi Pulang','Area Pulang'];
+  const loc=e=>e&&e.lat!=null?e.lat.toFixed(6)+','+e.lng.toFixed(6):'';const area=e=>!e||e.inArea==null?'':(e.inArea?'di area':'di luar area');
+  const rows=rs.map(r=>[r.date,settings.name,settings.empId,r.in?hm(r.in.ts):'',r.out?hm(r.out.ts):'',r.out?durMin(r):'',r.in?(isLate(r.in.ts)?'Terlambat':'Tepat waktu'):'',loc(r.in),area(r.in),loc(r.out),area(r.out)]);
+  const csv='﻿'+[head].concat(rows).map(l=>l.map(q).join(',')).join('\r\n');
+  const name='absensi-'+$('#month').value+'.csv';
+  if(window.AndroidBridge&&AndroidBridge.saveFile){const res=String(AndroidBridge.saveFile(name,'text/csv',csv));toast(res.startsWith('OK')?'Tersimpan di folder Download: '+name:'Gagal menyimpan: '+res)}
+  else{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download=name;document.body.appendChild(a);a.click();a.remove()}
+}
+$('#btnCsv').onclick=exportCsv;
+
+/* ---------- pengaturan ---------- */
+function fillSettings(){$('#sName').value=settings.name;$('#sId').value=settings.empId;$('#sOrg').value=settings.org;$('#sStart').value=settings.workStart;$('#sGrace').value=settings.grace;
+  $('#sLat').value=settings.officeLat;$('#sLng').value=settings.officeLng;$('#sRad').value=settings.radius;$('#sSelfie').checked=settings.needSelfie;$('#sLoc').checked=settings.needLoc}
+$('#btnSaveSet').onclick=()=>{
+  const lat=$('#sLat').value.trim().replace(',','.'),lng=$('#sLng').value.trim().replace(',','.');
+  if((lat||lng)&&(isNaN(parseFloat(lat))||isNaN(parseFloat(lng)))){toast('Latitude/longitude tidak valid');return}
+  settings=Object.assign(settings,{name:$('#sName').value.trim(),empId:$('#sId').value.trim(),org:$('#sOrg').value.trim(),workStart:$('#sStart').value||'08:00',grace:Number($('#sGrace').value||0),
+    officeLat:lat,officeLng:lng,radius:Number($('#sRad').value||100),needSelfie:$('#sSelfie').checked,needLoc:$('#sLoc').checked});
+  store(KS,settings);renderToday();toast('Pengaturan disimpan')};
+$('#btnHere').onclick=()=>{if(!navigator.geolocation){toast('GPS tidak tersedia');return}toast('Mencari lokasi…');
+  navigator.geolocation.getCurrentPosition(p=>{$('#sLat').value=p.coords.latitude.toFixed(6);$('#sLng').value=p.coords.longitude.toFixed(6);toast('Lokasi terisi, tekan Simpan')},
+    ()=>toast('Gagal mengambil lokasi'),{enableHighAccuracy:true,timeout:20000})};
+$('#btnWipe').onclick=async()=>{if(await askConfirm('Hapus SEMUA data absensi di perangkat ini?')){records=[];store(KR,records);renderToday();toast('Semua data dihapus')}};
+
+tick();setInterval(tick,1000);
+if('serviceWorker' in navigator&&!window.AndroidBridge&&location.protocol==='https:'){navigator.serviceWorker.register('sw.js').catch(()=>{})}
+</script>
+</body>
+</html>

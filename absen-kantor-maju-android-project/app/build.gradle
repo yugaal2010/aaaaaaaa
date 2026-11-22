@@ -1,0 +1,30 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'id.contoh.absenmaju'
+    // compileSdk = targetSdk = 34 sengaja dipilih: cocok dengan build-tools bawaan AGP 8.7
+    // dan menghindari "edge-to-edge" paksa Android 15 yang menumpuk WebView dengan status bar.
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'id.contoh.absenmaju'
+        minSdk 29          // Android 10+: simpan CSV ke Download lewat MediaStore tanpa izin storage
+        targetSdk 34
+        versionCode 1
+        versionName '1.0'
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+// Tidak ada dependensi library: WebView & API lain sudah bagian dari Android.
